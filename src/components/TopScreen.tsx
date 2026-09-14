@@ -1,10 +1,64 @@
+"use client";
+
+import { useEffect, useMemo, useState } from "react";
+
 type TopScreenProps = {
   onStart: () => void;
   onSettings: () => void;
-  onExit: () => void;
 };
 
-export function TopScreen({ onStart, onSettings, onExit }: TopScreenProps) {
+export function TopScreen({ onStart, onSettings }: TopScreenProps) {
+  const [menuIndex, setMenuIndex] = useState(0);
+
+  const actions = useMemo(
+    () => [
+      { label: "スタート", onClick: onStart },
+      { label: "設定", onClick: onSettings },
+    ],
+    [onStart, onSettings],
+  );
+
+  useEffect(() => {
+    const count = actions.length;
+    const move = (delta: number) => {
+      setMenuIndex((i) => (i + delta + count) % count);
+    };
+
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "ArrowUp") {
+        event.preventDefault();
+        move(-1);
+        return;
+      }
+      if (event.key === "ArrowDown") {
+        event.preventDefault();
+        move(1);
+        return;
+      }
+      if (event.key === "Enter") {
+        event.preventDefault();
+        actions[menuIndex]?.onClick();
+      }
+    };
+
+    let lastWheelAt = 0;
+    const onWheel = (event: WheelEvent) => {
+      event.preventDefault();
+      const now = performance.now();
+      if (now - lastWheelAt < 120) return;
+      lastWheelAt = now;
+      if (event.deltaY > 0) move(1);
+      else if (event.deltaY < 0) move(-1);
+    };
+
+    window.addEventListener("keydown", onKeyDown);
+    window.addEventListener("wheel", onWheel, { passive: false });
+    return () => {
+      window.removeEventListener("keydown", onKeyDown);
+      window.removeEventListener("wheel", onWheel);
+    };
+  }, [actions, menuIndex]);
+
   return (
     <section className="screen top-screen">
       <div className="brand-block">
@@ -13,16 +67,19 @@ export function TopScreen({ onStart, onSettings, onExit }: TopScreenProps) {
         <p className="brand-sub">同じ画面で、2人でわいわい遊べるミニゲーム集</p>
       </div>
 
-      <nav className="menu-stack" aria-label="メインメニュー">
-        <button type="button" className="menu-btn primary" onClick={onStart}>
-          スタート
-        </button>
-        <button type="button" className="menu-btn" onClick={onSettings}>
-          設定
-        </button>
-        <button type="button" className="menu-btn ghost" onClick={onExit}>
-          終了
-        </button>
+      <nav className="menu-stack" aria-label="メインメニュー" role="menu">
+        {actions.map((action, index) => (
+          <button
+            key={action.label}
+            type="button"
+            role="menuitem"
+            className={`menu-btn${index === menuIndex ? " selected" : ""}`}
+            onClick={action.onClick}
+            onMouseEnter={() => setMenuIndex(index)}
+          >
+            {action.label}
+          </button>
+        ))}
       </nav>
     </section>
   );

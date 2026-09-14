@@ -1,16 +1,17 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { ExitScreen } from "@/components/ExitScreen";
 import { GameSelectScreen } from "@/components/GameSelectScreen";
+import { ButtonMashGame } from "@/components/mash/ButtonMashGame";
 import { MatchScoreGame } from "@/components/match/MatchScoreGame";
+import { OngekiPracticeGame } from "@/components/ongeki/OngekiPracticeGame";
 import { SettingsScreen } from "@/components/SettingsScreen";
 import { TopScreen } from "@/components/TopScreen";
 import { GAMES } from "@/lib/games";
 import type { PlayMode } from "@/lib/settings";
 import { DEFAULT_SETTINGS, loadSettings, saveSettings } from "@/lib/settings";
 
-type Screen = "top" | "settings" | "select" | "exit" | "coming-soon" | "match";
+type Screen = "top" | "settings" | "select" | "match" | "mash" | "ongeki";
 
 export function AppShell() {
   const [screen, setScreen] = useState<Screen>("top");
@@ -33,10 +34,14 @@ export function AppShell() {
       setScreen("match");
       return;
     }
-    setScreen("coming-soon");
+    if (game.id === "button-mash") {
+      setScreen("mash");
+      return;
+    }
+    if (game.id === "ongeki-practice") {
+      setScreen("ongeki");
+    }
   };
-
-  const selectedGame = GAMES[selectedIndex];
 
   return (
     <main className="app-shell">
@@ -45,7 +50,6 @@ export function AppShell() {
           <TopScreen
             onStart={() => setScreen("select")}
             onSettings={() => setScreen("settings")}
-            onExit={() => setScreen("exit")}
           />
         )}
 
@@ -73,38 +77,18 @@ export function AppShell() {
           />
         )}
 
-        {screen === "coming-soon" && (
-          <section className="screen">
-            <header className="screen-header">
-              <h2>{selectedGame.title}</h2>
-              <p>
-                このゲームはこれから実装します。
-                {playMode === "online"
-                  ? " 設定はオンラインですが、現状は同じPC向けの土台です。"
-                  : " 同じPCモードで遊べるように準備中です。"}
-              </p>
-            </header>
-            <div className="select-actions">
-              <button
-                type="button"
-                className="menu-btn"
-                onClick={() => setScreen("select")}
-              >
-                ゲーム選択に戻る
-              </button>
-              <button
-                type="button"
-                className="menu-btn ghost"
-                onClick={() => setScreen("top")}
-              >
-                TOPに戻る
-              </button>
-            </div>
-          </section>
+        {screen === "mash" && (
+          <ButtonMashGame
+            onBackToSelect={() => setScreen("select")}
+            onBackToTop={() => setScreen("top")}
+          />
         )}
 
-        {screen === "exit" && (
-          <ExitScreen onBackToTop={() => setScreen("top")} />
+        {screen === "ongeki" && (
+          <OngekiPracticeGame
+            onBackToSelect={() => setScreen("select")}
+            onBackToTop={() => setScreen("top")}
+          />
         )}
       </div>
     </main>

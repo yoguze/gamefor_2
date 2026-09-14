@@ -191,6 +191,16 @@ export const MATCH_QUESTION_POOL: MatchQuestion[] = [
     options: ["1億円もらえる", "10歳若返る"],
   },
   { id: 64, prompt: "食べるならどっち？", options: ["焼肉", "寿司"] },
+  {
+    id: 65,
+    prompt: "より好きなのはどっち？",
+    options: ["声優", "俳優"],
+  },
+  {
+    id: 66,
+    prompt: "より好きなのはどっち？",
+    options: ["YouTuber", "お笑い芸人"],
+  },
 ];
 
 function shuffle<T>(items: T[]): T[] {

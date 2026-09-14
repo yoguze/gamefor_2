@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { GAMES } from "@/lib/games";
 
 type GameSelectScreenProps = {
@@ -18,6 +18,15 @@ export function GameSelectScreen({
 }: GameSelectScreenProps) {
   const game = GAMES[selectedIndex];
   const count = GAMES.length;
+  const [menuIndex, setMenuIndex] = useState(0);
+
+  const actions = useMemo(
+    () => [
+      { label: "このゲームで遊ぶ", onClick: onConfirm, kind: "default" as const },
+      { label: "戻る", onClick: onBack, kind: "ghost" as const },
+    ],
+    [onConfirm, onBack],
+  );
 
   const goPrev = () => {
     onChangeIndex((selectedIndex - 1 + count) % count);
@@ -28,18 +37,36 @@ export function GameSelectScreen({
   };
 
   useEffect(() => {
+    const menuCount = actions.length;
+    const moveMenu = (delta: number) => {
+      setMenuIndex((i) => (i + delta + menuCount) % menuCount);
+    };
+
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.key === "ArrowLeft") {
         event.preventDefault();
         onChangeIndex((selectedIndex - 1 + count) % count);
+        return;
       }
       if (event.key === "ArrowRight") {
         event.preventDefault();
         onChangeIndex((selectedIndex + 1) % count);
+        return;
+      }
+      if (event.key === "ArrowUp") {
+        event.preventDefault();
+        moveMenu(-1);
+        return;
+      }
+      if (event.key === "ArrowDown") {
+        event.preventDefault();
+        moveMenu(1);
+        return;
       }
       if (event.key === "Enter") {
         event.preventDefault();
-        onConfirm();
+        actions[menuIndex]?.onClick();
+        return;
       }
       if (event.key === "Escape") {
         event.preventDefault();
@@ -47,15 +74,29 @@ export function GameSelectScreen({
       }
     };
 
+    let lastWheelAt = 0;
+    const onWheel = (event: WheelEvent) => {
+      event.preventDefault();
+      const now = performance.now();
+      if (now - lastWheelAt < 120) return;
+      lastWheelAt = now;
+      if (event.deltaY > 0) moveMenu(1);
+      else if (event.deltaY < 0) moveMenu(-1);
+    };
+
     window.addEventListener("keydown", onKeyDown);
-    return () => window.removeEventListener("keydown", onKeyDown);
-  }, [selectedIndex, count, onChangeIndex, onConfirm, onBack]);
+    window.addEventListener("wheel", onWheel, { passive: false });
+    return () => {
+      window.removeEventListener("keydown", onKeyDown);
+      window.removeEventListener("wheel", onWheel);
+    };
+  }, [selectedIndex, count, onChangeIndex, onBack, actions, menuIndex]);
 
   return (
     <section className="screen select-screen">
       <header className="screen-header">
         <h2>ゲームを選ぶ</h2>
-        <p>← → で切り替えて、決定で始めます</p>
+        <p>← → でゲーム切替、↑ ↓ でメニュー、Enter で決定</p>
       </header>
 
       <div className="select-row">
@@ -86,13 +127,19 @@ export function GameSelectScreen({
         </button>
       </div>
 
-      <div className="select-actions">
-        <button type="button" className="menu-btn primary" onClick={onConfirm}>
-          このゲームで遊ぶ
-        </button>
-        <button type="button" className="menu-btn ghost" onClick={onBack}>
-          戻る
-        </button>
+      <div className="select-actions" role="menu" aria-label="ゲーム選択メニュー">
+        {actions.map((action, index) => (
+          <button
+            key={action.label}
+            type="button"
+            role="menuitem"
+            className={`menu-btn${action.kind === "ghost" ? " ghost" : ""}${index === menuIndex ? " selected" : ""}`}
+            onClick={action.onClick}
+            onMouseEnter={() => setMenuIndex(index)}
+          >
+            {action.label}
+          </button>
+        ))}
       </div>
     </section>
   );
