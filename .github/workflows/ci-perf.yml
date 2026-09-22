@@ -1,0 +1,113 @@
+name: CI Perf
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+
+concurrency:
+  group: ci-perf-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: Production build
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Next.js build
+        run: npm run build
+
+  performance:
+    name: Performance (Lighthouse)
+    needs: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Next.js build
+        run: npm run build
+
+      - name: Run Lighthouse CI
+        run: npm run test:perf
+
+      - name: Upload Lighthouse results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: lighthouse-report
+          path: .lighthouseci/
+          retention-days: 7
+
+  load:
+    name: Load test (k6)
+    needs: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Next.js build
+        run: npm run build
+
+      - name: Setup k6
+        uses: grafana/setup-k6-action@v1
+
+      - name: Start Next.js server
+        run: |
+          npm run start -- --port 3000 &
+          echo $! > .next-server.pid
+          for i in $(seq 1 60); do
+            if curl -sf http://127.0.0.1:3000/ >/dev/null; then
+              echo "Server is ready"
+              exit 0
+            fi
+            sleep 1
+          done
+          echo "Server failed to start"
+          exit 1
+
+      - name: Run k6 load test
+        run: npm run test:load
+        env:
+          BASE_URL: http://127.0.0.1:3000
+
+      - name: Stop Next.js server
+        if: always()
+        run: |
+          if [ -f .next-server.pid ]; then
+            kill "$(cat .next-server.pid)" || true
+          fi
