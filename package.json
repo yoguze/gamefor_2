@@ -6,7 +6,17 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:integration": "playwright test e2e/integration",
+    "test:visual": "playwright test e2e/visual",
+    "test:e2e": "playwright test",
+    "test:visual:update": "playwright test e2e/visual --update-snapshots",
+    "test:perf": "lhci autorun --config=lighthouserc.cjs",
+    "test:load": "k6 run load/homepage.js",
+    "test:load:local": "bash load/run-local.sh"
   },
   "dependencies": {
     "next": "16.3.5",
@@ -14,6 +24,8 @@
     "react-dom": "19.2.8"
   },
   "devDependencies": {
+    "@lhci/cli": "^0.15.1",
+    "@playwright/test": "^1.63.0",
     "@tailwindcss/postcss": "^4",
     "@types/node": "^20",
     "@types/react": "^19",
@@ -21,6 +33,7 @@
     "eslint": "^9",
     "eslint-config-next": "16.3.5",
     "tailwindcss": "^4",
-    "typescript": "^5"
+    "typescript": "^5",
+    "vitest": "^4.1.11"
   }
 }

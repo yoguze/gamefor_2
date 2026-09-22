@@ -17,7 +17,7 @@ import {
   timeBonusForCombo,
   type Problem,
 } from "@/lib/ongeki/generate";
-import { buildPlayStats, type ProblemLog } from "@/lib/ongeki/stats";
+import { buildPlayStats, type PlayStats, type ProblemLog } from "@/lib/ongeki/stats";
 
 type Phase = "ready" | "countdown" | "playing" | "result" | "details";
 
@@ -41,6 +41,7 @@ export function OngekiPracticeGame({
   const [flashMiss, setFlashMiss] = useState(false);
   const [pressedIds, setPressedIds] = useState<Set<ButtonId>>(() => new Set());
   const [resultMenuIndex, setResultMenuIndex] = useState(0);
+  const [playStats, setPlayStats] = useState<PlayStats | null>(null);
 
   const phaseRef = useRef(phase);
   const remainingRef = useRef(INITIAL_DURATION_MS);
@@ -162,6 +163,10 @@ export function OngekiPracticeGame({
       });
       problemRef.current = null;
     }
+    setPlayStats(
+      buildPlayStats(logsRef.current, scoreRef.current, maxComboRef.current),
+    );
+    setResultMenuIndex(0);
     setPhase("result");
   }, []);
 
@@ -296,7 +301,6 @@ export function OngekiPracticeGame({
   // Countdown
   useEffect(() => {
     if (phase !== "countdown") return;
-    setCountdown(3);
     let n = 3;
     const timer = window.setInterval(() => {
       n -= 1;
@@ -343,17 +347,11 @@ export function OngekiPracticeGame({
     return () => cancelAnimationFrame(frame);
   }, [phase, endGame]);
 
-  const stats = useMemo(
-    () => buildPlayStats(logsRef.current, score, maxCombo),
-    // recompute when entering result/details
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [phase, score, maxCombo],
-  );
-
   const leftPrompt = problem?.ids.filter((id) => id.startsWith("L_")) ?? [];
   const rightPrompt = problem?.ids.filter((id) => id.startsWith("R_")) ?? [];
 
   const startGame = () => {
+    setCountdown(3);
     setPhase("countdown");
   };
 
@@ -374,12 +372,6 @@ export function OngekiPracticeGame({
     ],
     [onBackToSelect, onBackToTop],
   );
-
-  useEffect(() => {
-    if (phase === "result") {
-      setResultMenuIndex(0);
-    }
-  }, [phase]);
 
   useEffect(() => {
     if (phase !== "result") return;
@@ -484,6 +476,18 @@ export function OngekiPracticeGame({
   }
 
   if (phase === "details") {
+    const stats = playStats;
+    if (!stats) {
+      return (
+        <section className="screen ongeki-screen">
+          <p>データがありません</p>
+          <button type="button" className="menu-btn" onClick={() => setPhase("result")}>
+            リザルトに戻る
+          </button>
+        </section>
+      );
+    }
+
     return (
       <section className="screen ongeki-screen ongeki-details">
         <header className="screen-header">

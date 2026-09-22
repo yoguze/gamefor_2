@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { GameSelectScreen } from "@/components/GameSelectScreen";
 import { ButtonMashGame } from "@/components/mash/ButtonMashGame";
 import { MatchScoreGame } from "@/components/match/MatchScoreGame";
@@ -9,19 +9,16 @@ import { SettingsScreen } from "@/components/SettingsScreen";
 import { TopScreen } from "@/components/TopScreen";
 import { GAMES } from "@/lib/games";
 import type { PlayMode } from "@/lib/settings";
-import { DEFAULT_SETTINGS, loadSettings, saveSettings } from "@/lib/settings";
+import { loadSettings, saveSettings } from "@/lib/settings";
 
 type Screen = "top" | "settings" | "select" | "match" | "mash" | "ongeki";
 
 export function AppShell() {
   const [screen, setScreen] = useState<Screen>("top");
-  const [playMode, setPlayMode] = useState<PlayMode>(DEFAULT_SETTINGS.playMode);
+  const [playMode, setPlayMode] = useState<PlayMode>(
+    () => loadSettings().playMode,
+  );
   const [selectedIndex, setSelectedIndex] = useState(0);
-
-  useEffect(() => {
-    const settings = loadSettings();
-    setPlayMode(settings.playMode);
-  }, []);
 
   const handleChangePlayMode = (mode: PlayMode) => {
     setPlayMode(mode);
