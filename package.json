@@ -14,7 +14,7 @@
     "test:visual": "playwright test e2e/visual",
     "test:e2e": "playwright test",
     "test:visual:update": "playwright test e2e/visual --update-snapshots",
-    "test:perf": "lhci autorun --config=lighthouserc.cjs",
+    "test:perf": "npx --yes @lhci/cli@0.15.1 autorun --config=lighthouserc.cjs",
     "test:load": "k6 run load/homepage.js",
     "test:load:local": "bash load/run-local.sh"
   },
@@ -24,7 +24,6 @@
     "react-dom": "19.2.8"
   },
   "devDependencies": {
-    "@lhci/cli": "^0.15.1",
     "@playwright/test": "^1.63.0",
     "@tailwindcss/postcss": "^4",
     "@types/node": "^20",

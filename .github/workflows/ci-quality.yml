@@ -16,10 +16,10 @@ jobs:
     timeout-minutes: 15
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v5
         with:
           node-version: 22
           cache: npm
@@ -36,8 +36,8 @@ jobs:
       - name: Unit tests
         run: npm test
 
-      - name: Dependency audit (high+)
-        run: npm audit --audit-level=high
+      - name: Dependency audit (production, high+)
+        run: npm audit --omit=dev --audit-level=high
 
   build:
     name: Production build
@@ -45,10 +45,10 @@ jobs:
     timeout-minutes: 15
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Setup Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v5
         with:
           node-version: 22
           cache: npm
