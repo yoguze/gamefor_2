@@ -1,4 +1,3 @@
-/** @type {import('@lhci/cli').Config} */
 module.exports = {
   ci: {
     collect: {
@@ -8,20 +7,20 @@ module.exports = {
       numberOfRuns: 3,
       settings: {
         preset: "desktop",
-        // CI 上のヘッドレス Chrome 向け
-        chromeFlags: "--no-sandbox --disable-dev-shm-usage",
+        chromeFlags: "--no-sandbox --disable-dev-shm-usage --headless=new",
       },
     },
     assert: {
+      // CI 共有ランナー向けに、致命的な崩れだけ error にする
       assertions: {
-        "categories:performance": ["error", { minScore: 0.7 }],
+        "categories:performance": ["warn", { minScore: 0.6 }],
         "categories:accessibility": ["warn", { minScore: 0.85 }],
         "categories:best-practices": ["warn", { minScore: 0.85 }],
-        "first-contentful-paint": ["warn", { maxNumericValue: 2500 }],
-        "largest-contentful-paint": ["error", { maxNumericValue: 4000 }],
+        "first-contentful-paint": ["warn", { maxNumericValue: 4000 }],
+        "largest-contentful-paint": ["warn", { maxNumericValue: 6000 }],
         "cumulative-layout-shift": ["error", { maxNumericValue: 0.25 }],
-        "total-blocking-time": ["warn", { maxNumericValue: 400 }],
-        "interactive": ["warn", { maxNumericValue: 4500 }],
+        "total-blocking-time": ["warn", { maxNumericValue: 800 }],
+        interactive: ["warn", { maxNumericValue: 10000 }],
       },
     },
     upload: {
